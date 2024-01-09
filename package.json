@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@tensorflow-models/deeplab": "^0.2.2",
     "@tensorflow/tfjs": "^4.1.0",
     "@tensorflow/tfjs-backend-webgl": "^4.9.0",
     "@tensorflow/tfjs-converter": "^4.9.0",
