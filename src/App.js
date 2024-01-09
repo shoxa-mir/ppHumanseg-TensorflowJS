@@ -2,15 +2,15 @@ import React, { useRef, useState, useEffect } from "react";
 import * as tf from "@tensorflow/tfjs";
 import Webcam from "react-webcam";
 import "./App.css";
-import { drawMask, preprocessVideoFrame, postprocResult, postproc, preproc } from "./utilities";
+import { drawMask, preprocessVideoFrame, postprocResult } from "./utilities";
 
 function App() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
 
-  // Function to load and run the deeplab model
+  // Function to load and run the PPHumanSeg model
   const runSegment = async () => {
-    const MODEL_PATH = 'http://localhost:3000/web_model/model.json';
+    const MODEL_PATH = 'https://192.168.1.30:3000/web_model/model.json';
     const model = await tf.loadGraphModel(MODEL_PATH);
     console.log("PPHumanSeg model loaded.");
     
@@ -28,6 +28,7 @@ function App() {
     ) {
       const deviceWidth = window.innerWidth;
       const deviceHeight = window.innerHeight;
+      // console.log("deviceWidth: ", deviceWidth, "deviceHeight: ", deviceHeight);
       const video = webcamRef.current.video;
       const videoWidth = Math.min(webcamRef.current.video.videoWidth, deviceWidth);
       const videoHeight = Math.min(webcamRef.current.video.videoHeight, deviceHeight);
@@ -46,33 +47,31 @@ function App() {
 
       // Postprocessing
       const segm = postprocResult(segmap, videoHeight, videoWidth);
-      // const segm = postproc(segmap, videoHeight, videoWidth);
-
-      // const colorMap = tf.tensor([[0, 0, 0, 255], [255, 255, 255, 100]]);
-      // const segmColor = tf.gather(colorMap, segm, 0).squeeze();
-      // console.log(segmColor)
 
       // Draw the segmentation map on canvas
       const ctx = canvasRef.current.getContext("2d");
       drawMask(ctx, segm);
-  
-    //   segmColor.data().then(data => {
-    //     const height = segmColor.shape[0];
-    //     const width = segmColor.shape[1];
-    //     console.log(new Uint8ClampedArray(data));
-    //     var imageData = new ImageData(new Uint8ClampedArray(data), width, height);
-
-    //     ctx.putImageData(imageData, 0, 0);
-    //     imageData = null;
-    // });
-
-    // console.log(tf.memory());
-
+      
+      // Clean up
+      tf.dispose(input, segmap, segm);
+      
     }
   };
 
-  // Run the deeplab model when component mounts
+  // Run the segmentation model when component mounts
   useEffect(()=>{runSegment()},[]);
+
+  if (window.innerWidth < window.innerHeight) {
+    // Portrait ratio is 9:16
+    const w = window.innerHeight/16*9;
+    const h = window.innerHeight;
+  }
+  else {
+    // Landscape ratio is 16:9
+    const h = window.innerWidth/9*16;
+    const w = window.innerWidth;
+  }
+
 
   return (
     <div className="App">
@@ -87,8 +86,7 @@ function App() {
             right: 0,
             textAlign: "center",
             zIndex: 9,
-            width: 640,
-            height: 480,
+            height: 640,
           }}
         />
 
@@ -102,8 +100,7 @@ function App() {
             right: 0,
             textAlign: "center",
             zIndex: 10,
-            width: 640,
-            height: 480,
+            height: 600,
           }}
         />
       </header>
